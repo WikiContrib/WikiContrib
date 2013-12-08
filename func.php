@@ -114,7 +114,7 @@ function createdByUser($nom,$wikisite,$annee){
 
         $newStartDate = $year."-".$month."-".$day."T".$hour.":".$min.":".$sec."Z";
 
-        $jsonurl = $wikisite."/w/api.php?action=query&list=usercontribs&format=json&uclimit=max&ucstart=".$newStartDate."&ucend=".$newEndDate."&ucuser=".$nom."&ucnamespace=0%7C4%7C6%7C8&ucdir=newer&ucprop=ids%7Ctitle%7Ctimestamp";
+        $jsonurl = $wikisite."/w/api.php?action=query&list=usercontribs&format=json&uclimit=max&ucstart=".$newStartDate."&ucend=".$newEndDate."&ucuser=".$nom."&ucnamespace=0%7C2&ucdir=newer&ucprop=ids%7Ctitle%7Ctimestamp";
         $nodes[] = $jsonurl;    // add url to the list
     }
 
