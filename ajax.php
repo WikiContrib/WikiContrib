@@ -1,12 +1,13 @@
 <?php
+
 include 'func.php';
 $pageId = rawurlencode($_POST['id']);
 $title = str_replace(' ', '_', $_POST['titre']);
 $wikisite = $_POST['wikisite'];
 $annee = $_POST['annee'];
-$rvstart = $annee."-01-01T00%3A00%3A00Z";
+$rvstart = $annee . "-01-01T00%3A00%3A00Z";
 $anneefin = $annee + 1;
-$rvend = $anneefin."-01-01T00%3A00%3A00Z";
+$rvend = $anneefin . "-01-01T00%3A00%3A00Z";
 $nom = urlencode($_POST['nom']);
 $latestUsersTime = getUsersLatestContrib($nom, $wikisite, $pageId); //the last contribution of the given user
 
@@ -18,30 +19,30 @@ $latestUsersTime = getUsersLatestContrib($nom, $wikisite, $pageId); //the last c
  * and computes the sum of page views during the given year
  *
  */
-$total=0;
-if ($wikisite == 'http://en.wikipedia.org'){
+$total = 0;
+if ($wikisite == 'http://en.wikipedia.org') {
     $lang = "en";
-}else{
+} else {
     $lang = "fr";
 }
 $nodes = array(
-    'http://stats.grok.se/json/'.$lang.'/'.$annee.'01/'.$title,
-    'http://stats.grok.se/json/'.$lang.'/'.$annee.'02/'.$title,
-    'http://stats.grok.se/json/'.$lang.'/'.$annee.'03/'.$title,
-    'http://stats.grok.se/json/'.$lang.'/'.$annee.'04/'.$title,
-    'http://stats.grok.se/json/'.$lang.'/'.$annee.'05/'.$title,
-    'http://stats.grok.se/json/'.$lang.'/'.$annee.'06/'.$title,
-    'http://stats.grok.se/json/'.$lang.'/'.$annee.'07/'.$title,
-    'http://stats.grok.se/json/'.$lang.'/'.$annee.'08/'.$title,
-    'http://stats.grok.se/json/'.$lang.'/'.$annee.'09/'.$title,
-    'http://stats.grok.se/json/'.$lang.'/'.$annee.'10/'.$title,
-    'http://stats.grok.se/json/'.$lang.'/'.$annee.'11/'.$title,
-    'http://stats.grok.se/json/'.$lang.'/'.$annee.'12/'.$title,
+    'http://stats.grok.se/json/' . $lang . '/' . $annee . '01/' . $title,
+    'http://stats.grok.se/json/' . $lang . '/' . $annee . '02/' . $title,
+    'http://stats.grok.se/json/' . $lang . '/' . $annee . '03/' . $title,
+    'http://stats.grok.se/json/' . $lang . '/' . $annee . '04/' . $title,
+    'http://stats.grok.se/json/' . $lang . '/' . $annee . '05/' . $title,
+    'http://stats.grok.se/json/' . $lang . '/' . $annee . '06/' . $title,
+    'http://stats.grok.se/json/' . $lang . '/' . $annee . '07/' . $title,
+    'http://stats.grok.se/json/' . $lang . '/' . $annee . '08/' . $title,
+    'http://stats.grok.se/json/' . $lang . '/' . $annee . '09/' . $title,
+    'http://stats.grok.se/json/' . $lang . '/' . $annee . '10/' . $title,
+    'http://stats.grok.se/json/' . $lang . '/' . $annee . '11/' . $title,
+    'http://stats.grok.se/json/' . $lang . '/' . $annee . '12/' . $title,
 );
 $mh = curl_multi_init();
 $curl_array = array();
 
-foreach($nodes as $i => $url){
+foreach ($nodes as $i => $url) {
     $curl_array[$i] = curl_init($url);
     curl_setopt($curl_array[$i], CURLOPT_RETURNTRANSFER, true);
     curl_multi_add_handle($mh, $curl_array[$i]);
@@ -49,23 +50,23 @@ foreach($nodes as $i => $url){
 $running = NULL;
 do {
     usleep(10000);
-    curl_multi_exec($mh,$running);
-} while($running > 0);
+    curl_multi_exec($mh, $running);
+} while ($running > 0);
 
-foreach($nodes as $i => $url){
+foreach ($nodes as $i => $url) {
     $res[$url] = curl_multi_getcontent($curl_array[$i]);
-    $obj[$url] = json_decode($res[$url],true);
+    $obj[$url] = json_decode($res[$url], true);
     $visite[$url] = $obj[$url]['daily_views'];
-    if(!is_null($visite[$url])){
+    if (!is_null($visite[$url])) {
         $total += array_sum($visite[$url]);
     }
 }
 
-foreach($nodes as $i => $url){
+foreach ($nodes as $i => $url) {
     curl_multi_remove_handle($mh, $curl_array[$i]);
 }
 curl_multi_close($mh);
-$result0 =  $total; // the number of page views on the given page
+$result0 = $total; // the number of page views on the given page
 //end page views
 
 /**
@@ -74,10 +75,10 @@ $result0 =  $total; // the number of page views on the given page
  *
  */
 $result1 = 0;
-$jsonurl = $wikisite."/w/api.php?action=query&prop=revisions&format=json&rvprop=ids%7Ctimestamp&rvlimit=max&rvstart=".$rvstart."&rvend=".$rvend."&rvdir=newer&pageids=".$pageId;
+$jsonurl = $wikisite . "/w/api.php?action=query&prop=revisions&format=json&rvprop=ids%7Ctimestamp&rvlimit=max&rvstart=" . $rvstart . "&rvend=" . $rvend . "&rvdir=newer&pageids=" . $pageId;
 $json = curl_get_file_contents($jsonurl);
 $res = $json['content'];
-$obj = json_decode($res,true);
+$obj = json_decode($res, true);
 $revision = $obj['query']['pages'][$pageId]['revisions'];
 $countrevision = count($revision);
 $result1 = $countrevision;  // the number of modifications during the given year
@@ -88,12 +89,12 @@ $result1 = $countrevision;  // the number of modifications during the given year
  *
  */
 $result2 = 0;
-$jsonurl = $wikisite."/w/api.php?action=query&prop=revisions&format=json&rvprop=ids%7Ctimestamp%7Cuser&rvlimit=max&rvstart=".$latestUsersTime."&rvdir=newer&pageids=".$pageId;
+$jsonurl = $wikisite . "/w/api.php?action=query&prop=revisions&format=json&rvprop=ids%7Ctimestamp%7Cuser&rvlimit=max&rvstart=" . $latestUsersTime . "&rvdir=newer&pageids=" . $pageId;
 $json = curl_get_file_contents($jsonurl);
 $res = $json['content'];
-$obj = json_decode($res,true);
+$obj = json_decode($res, true);
 $revisions = $obj['query']['pages'][$pageId]['revisions'];
-if(!is_null($revisions)){
+if (!is_null($revisions)) {
     $result2 = sizeof($revisions);  // the number of modifications since the last contribution of the given user
 }
 
@@ -104,14 +105,14 @@ if(!is_null($revisions)){
  */
 $timestamp = '';
 $result3 = 0;
-$jsonurl = $wikisite."/w/api.php?action=query&prop=revisions&format=json&rvprop=ids%7Ctimestamp%7Cuser&rvlimit=1&rvdir=older&pageids=".$pageId;
+$jsonurl = $wikisite . "/w/api.php?action=query&prop=revisions&format=json&rvprop=ids%7Ctimestamp%7Cuser&rvlimit=1&rvdir=older&pageids=" . $pageId;
 $json = curl_get_file_contents($jsonurl);
 $res = $json['content'];
-$obj = json_decode($res,true);
-if(!is_null($obj['query']['pages'][$pageId]['revisions'])){
+$obj = json_decode($res, true);
+if (!is_null($obj['query']['pages'][$pageId]['revisions'])) {
     $timestamp = $obj['query']['pages'][$pageId]['revisions'][0]['timestamp'];  // the timestamp of the last contribution on the given page
 }
-if($timestamp != ''){
+if ($timestamp != '') {
     $d1 = new DateTime($timestamp);
     $d2 = new DateTime('now');
     $interval = $d2->diff($d1);
@@ -125,14 +126,14 @@ if($timestamp != ''){
  */
 $timestamp = '';
 $result4 = 0;
-$jsonurl = $wikisite."/w/api.php?action=query&prop=revisions&format=json&rvprop=ids%7Ctimestamp%7Cuser&rvlimit=1&rvdir=older&rvuser=".$nom."&pageids=".$pageId;
+$jsonurl = $wikisite . "/w/api.php?action=query&prop=revisions&format=json&rvprop=ids%7Ctimestamp%7Cuser&rvlimit=1&rvdir=older&rvuser=" . $nom . "&pageids=" . $pageId;
 $json = curl_get_file_contents($jsonurl);
 $res = $json['content'];
-$obj = json_decode($res,true);
-if(!is_null($obj['query']['pages'][$pageId]['revisions'])){
+$obj = json_decode($res, true);
+if (!is_null($obj['query']['pages'][$pageId]['revisions'])) {
     $timestamp = $obj['query']['pages'][$pageId]['revisions'][0]['timestamp'];  // the timestamp of the user's last contribution on the given page
 }
-if($timestamp != ''){
+if ($timestamp != '') {
     $d1 = new DateTime($timestamp);
     $d2 = new DateTime('now');
     $interval = $d2->diff($d1);
