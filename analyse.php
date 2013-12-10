@@ -1,19 +1,17 @@
-<?php session_start(); ?>
 <?php
-
+session_start();
 include 'func.php';
-$nom = trim($_POST['nom']);
+$username = trim($_POST['nom']);
 $wikisite = $_POST['wikisite'];
-$annee = $_POST['annee'];
-$_SESSION['nom'] = $nom;
+$year = $_POST['annee'];
+$_SESSION['nom'] = $username;
 $_SESSION['wikisite'] = $wikisite;
-$_SESSION['annee'] = $annee;
-if (!user_exist($nom, $wikisite)) {
+$_SESSION['annee'] = $year;
+if (!user_exist($username, $wikisite)) {
     $_SESSION['erreur'] = true;
-    $_SESSION['erreur_detail'] = 'L\'utilisateur ' . $nom . ' n\'existe pas';
+    $_SESSION['erreur_detail'] = 'L\'utilisateur ' . $username . ' n\'existe pas';
     header('Location: index.php');
 } else {
     $_SESSION['erreur'] = false;
     header('location: affichage.php');
 }
-?>

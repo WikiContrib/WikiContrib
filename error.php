@@ -1,6 +1,5 @@
 
 <?php
-
 if (isset($_SESSION['erreur'])) {
 
     $erreur = $_SESSION['erreur'];
@@ -10,4 +9,3 @@ if (isset($_SESSION['erreur'])) {
         $_SESSION['erreur'] = false;
     }
 }
-?>

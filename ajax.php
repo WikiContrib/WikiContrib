@@ -2,14 +2,14 @@
 
 include 'func.php';
 $pageId = rawurlencode($_POST['id']);
-$title = str_replace(' ', '_', $_POST['titre']);
+$pageTitle = str_replace(' ', '_', $_POST['titre']);
 $wikisite = $_POST['wikisite'];
-$annee = $_POST['annee'];
-$rvstart = $annee . "-01-01T00%3A00%3A00Z";
-$anneefin = $annee + 1;
+$year = $_POST['annee'];
+$rvstart = $year . "-01-01T00%3A00%3A00Z";
+$anneefin = $year + 1;
 $rvend = $anneefin . "-01-01T00%3A00%3A00Z";
-$nom = urlencode($_POST['nom']);
-$latestUsersTime = getUsersLatestContrib($nom, $wikisite, $pageId); //the last contribution of the given user
+$username = urlencode($_POST['nom']);
+$latestUsersTime = getUsersLatestContrib($username, $wikisite, $pageId); //the last contribution of the given user
 
 
 /**
@@ -26,18 +26,18 @@ if ($wikisite == 'http://en.wikipedia.org') {
     $lang = "fr";
 }
 $nodes = array(
-    'http://stats.grok.se/json/' . $lang . '/' . $annee . '01/' . $title,
-    'http://stats.grok.se/json/' . $lang . '/' . $annee . '02/' . $title,
-    'http://stats.grok.se/json/' . $lang . '/' . $annee . '03/' . $title,
-    'http://stats.grok.se/json/' . $lang . '/' . $annee . '04/' . $title,
-    'http://stats.grok.se/json/' . $lang . '/' . $annee . '05/' . $title,
-    'http://stats.grok.se/json/' . $lang . '/' . $annee . '06/' . $title,
-    'http://stats.grok.se/json/' . $lang . '/' . $annee . '07/' . $title,
-    'http://stats.grok.se/json/' . $lang . '/' . $annee . '08/' . $title,
-    'http://stats.grok.se/json/' . $lang . '/' . $annee . '09/' . $title,
-    'http://stats.grok.se/json/' . $lang . '/' . $annee . '10/' . $title,
-    'http://stats.grok.se/json/' . $lang . '/' . $annee . '11/' . $title,
-    'http://stats.grok.se/json/' . $lang . '/' . $annee . '12/' . $title,
+    'http://stats.grok.se/json/' . $lang . '/' . $year . '01/' . $pageTitle,
+    'http://stats.grok.se/json/' . $lang . '/' . $year . '02/' . $pageTitle,
+    'http://stats.grok.se/json/' . $lang . '/' . $year . '03/' . $pageTitle,
+    'http://stats.grok.se/json/' . $lang . '/' . $year . '04/' . $pageTitle,
+    'http://stats.grok.se/json/' . $lang . '/' . $year . '05/' . $pageTitle,
+    'http://stats.grok.se/json/' . $lang . '/' . $year . '06/' . $pageTitle,
+    'http://stats.grok.se/json/' . $lang . '/' . $year . '07/' . $pageTitle,
+    'http://stats.grok.se/json/' . $lang . '/' . $year . '08/' . $pageTitle,
+    'http://stats.grok.se/json/' . $lang . '/' . $year . '09/' . $pageTitle,
+    'http://stats.grok.se/json/' . $lang . '/' . $year . '10/' . $pageTitle,
+    'http://stats.grok.se/json/' . $lang . '/' . $year . '11/' . $pageTitle,
+    'http://stats.grok.se/json/' . $lang . '/' . $year . '12/' . $pageTitle,
 );
 $mh = curl_multi_init();
 $curl_array = array();
@@ -126,7 +126,7 @@ if ($timestamp != '') {
  */
 $timestamp = '';
 $result4 = 0;
-$jsonurl = $wikisite . "/w/api.php?action=query&prop=revisions&format=json&rvprop=ids%7Ctimestamp%7Cuser&rvlimit=1&rvdir=older&rvuser=" . $nom . "&pageids=" . $pageId;
+$jsonurl = $wikisite . "/w/api.php?action=query&prop=revisions&format=json&rvprop=ids%7Ctimestamp%7Cuser&rvlimit=1&rvdir=older&rvuser=" . $username . "&pageids=" . $pageId;
 $json = curl_get_file_contents($jsonurl);
 $res = $json['content'];
 $obj = json_decode($res, true);
@@ -142,6 +142,32 @@ if ($timestamp != '') {
 
 /**
  *
+ * This part of code searches if the page is not redirected
+ *
+ */
+$result5 = 'Non';
+$jsonurl = $wikisite."/w/api.php?action=query&prop=info&format=json&pageids=".$pageId."&redirects=";
+$json = curl_get_file_contents($jsonurl);
+$res = $json['content'];
+$obj = json_decode($res,true);
+$isRedirected = isset($obj['query']['redirects']);
+if($isRedirected){
+    $result5 = 'Oui';
+}
+
+/**
+ *
+ * This part of code returns the page url, if the page redirects to another page, it will return the redirected page
+ *
+ */
+$jsonurl = $wikisite."/w/api.php?action=query&prop=info&format=json&inprop=url&pageids=".$pageId;
+$json = curl_get_file_contents($jsonurl);
+$res = $json['content'];
+$obj = json_decode($res,true);
+$result6 = $obj['query']['pages'][$pageId]['fullurl'];
+
+/**
+ *
  * This array is sent back to the affichage.php page as a response to the "plus()" function's ajax call
  *
  */
@@ -151,6 +177,7 @@ $finalResult[] = $result1;  // the number of modifications during the given year
 $finalResult[] = $result2;  // the number of modifications since the last contribution of the given user
 $finalResult[] = $result3;  // the number of days since the last contribution on the given page
 $finalResult[] = $result4;  // the number of days since the user's last contribution on the given page
+$finalResult[] = $result5;  // is redirected?
+$finalResult[] = $result6;  // url
 
 echo json_encode($finalResult);
-

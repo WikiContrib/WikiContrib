@@ -1,15 +1,15 @@
 <?php
 session_start();
-$nom = $_SESSION['nom'];
+$username = $_SESSION['nom'];
 $wikisite = $_SESSION['wikisite'];
-$annee = $_SESSION['annee'];
+$year = $_SESSION['annee'];
 /**
  *  if the GET variable receives a value for the field "annee", the $_SESSION['annee'] value will be overwritten
  *  this operation is done to allow displaying statistic information for for different years
  */
 if (isset($_GET['annee'])) {
     $_SESSION['annee'] = $_GET['annee'];
-    $annee = $_SESSION['annee'];
+    $year = $_SESSION['annee'];
 }
 include 'func.php';
 ?>
@@ -28,9 +28,9 @@ include 'func.php';
         <?php
         $allArticles = array();     // will contain the id and title of all created pages by this user
         $start = microtime(true);
-        $allArticles = createdByUser($nom, $wikisite, $annee);
-        $subscription = subscription($nom, $wikisite);
-        $sexe = sexe($nom, $wikisite);
+        $allArticles = createdByUser($username, $wikisite, $year);
+        $subscription = subscription($username, $wikisite);
+        $sexe = sexe($username, $wikisite);
         $time_taken = microtime(true) - $start;
         $numberOfCreatedArticles = count($allArticles);
 
@@ -71,7 +71,7 @@ include 'func.php';
          */
         echo "<table class=\"affichage\">
 			<tr>
-				<td class=\"id\">Articles créé en <b>" . $annee . "</b> par <b>" . $nom . "</b> :</td>
+				<td class=\"id\">Articles créé en <b>" . $year . "</b> par <b>" . $username . "</b> :</td>
 				<td class=\"id\"><b>" . $numberOfCreatedArticles . "</b> nouveaux articles</td>
 			</tr>
 			<tr>
@@ -80,14 +80,16 @@ include 'func.php';
 			</tr>
 			<tr>
 				<td class=\"id\">Inscription :<b> " . $subscription . "</b></td>
-				<td class=\"id\">" . $nom . " est de sexe " . $sexe . "</td>
+				<td class=\"id\">" . $username . " est de sexe " . $sexe . "</td>
 			</tr>
 		</table>	
 		";
 
         for ($i = 0; $i < count($allArticles); $i++) {
-            $artId = $allArticles[$i][0];   // the page id
-            $artTitle = $allArticles[$i][1]; // the page title
+            $pageId = $allArticles[$i][0];                                      // the page id
+            $pageTitle = $allArticles[$i][1];                                   // the page title
+            $dateOfCreationTimestamp = $allArticles[$i][2];                     // timestamp of the date when the page was created
+            $dateOfCreation = timestampToDate($dateOfCreationTimestamp);        // the date when the page was created
             /**
              *  this part of code displays a table that contains
              *  the following statistics: the page id, its title and a js button leading to the additional statistics
@@ -97,9 +99,9 @@ include 'func.php';
              */
             echo "<table class=\"affichage\">
 				<tr>
-					<td class=\"id\"><b>Article ID : </b> " . $artId . "</td>
-					<td class=\"titre\"><b>Titre : </b>" . urldecode($artTitle) . "</td>
-					<td><input type=\"submit\" value=\"PLUS\" onclick=\"plus('" . $artTitle . "','" . $wikisite . "','" . $annee . "','" . $i . "','" . $artId . "','" . $nom . "');\"></td>
+					<td class=\"id\"><b>Article ID : </b> " . $pageId . "</td>
+					<td class=\"titre\"><b>Titre : </b>" . urldecode($pageTitle) . "</td>
+					<td><input type=\"submit\" value=\"PLUS\" onclick=\"plus('" . $pageTitle . "','" . $wikisite . "','" . $year . "','" . $i . "','" . $pageId . "','" . $username . "','" . $dateOfCreation . "');\"></td>
 				</tr>
 			</table>";
 
@@ -122,30 +124,34 @@ include 'func.php';
              *
              * then creates a table where it displays the received data
              *
-             * @param titre     - page title
-             * @param wikisite  - wiki website
-             * @param annee     - year
-             * @param i         - id of the recently created div
-             * @param id        - page id
-             * @param nom       - username
+             * @param pageTitle      - page title
+             * @param wikisite       - wiki website
+             * @param year           - year
+             * @param i              - id of the recently created div
+             * @param pageId         - page id
+             * @param username       - username
+             * @param dateOfCreation - date of creation
              */
-            function plus(titre, wikisite, annee, i, id, nom) {
+            function plus(pageTitle, wikisite, year, i, pageId, username, dateOfCreation) {
                 $.ajax({
                     async: true,
                     url: "ajax.php",
                     dataType: "json",
                     type: "POST",
                     data: {
-                        titre: titre, wikisite: wikisite, annee: annee, id: id, nom: nom
+                        titre: pageTitle, wikisite: wikisite, annee: year, id: pageId, nom: username
                     }
                 }).done(function(data) {
                     console.log(data);
                     document.getElementById(i).innerHTML = "<table class=\"affichage\">" +
-                            "<tr><td class=\"stat\">Nombre de visites en " + annee + " : </td><td class=\"result\">" + data[0] + " visites" + "</td><td></td></tr>" +
-                            "<tr><td class=\"stat\">Nombre de modifications en " + annee + " : </td><td class=\"result\">" + data[1] + " modifications" + "</td><td></td></tr>" +
+                            "<tr><td class=\"stat\">Date de la création : </td><td class=\"result\">" + dateOfCreation + "</td><td></td></tr>" +
+                            "<tr><td class=\"stat\">Nombre de visites en " + year + " : </td><td class=\"result\">" + data[0] + " visites" + "</td><td></td></tr>" +
+                            "<tr><td class=\"stat\">Nombre de modifications en " + year + " : </td><td class=\"result\">" + data[1] + " modifications" + "</td><td></td></tr>" +
                             "<tr><td class=\"stat\">Nombre de modifications depuis la dernière intervention : </td><td class=\result\">" + data[2] + " modifications" + "</td><td></td></tr>" +
                             "<tr><td class=\"stat\">Jours depuis la dernière intervention : </td><td class=\"result\">" + data[3] + " jours</td><td></td></tr>" +
                             "<tr><td class=\"stat\">Jours depuis la dernière intervention de l'auteur : </td><td class=\"result\">" + data[4] + " jours</td><td></td></tr>" +
+                            "<tr><td class=\"stat\">Redirigée : </td><td class=\"result\">" + data[5] + "</td><td></td></tr>" +
+                            "<tr><td class=\"stat\">URL de la page : </td><td class=\"result\"><a href='" + data[6] + "'>URL</a> </td><td></td></tr>" +
                             "</table>";
                     toggle_visibility(i);
                 });

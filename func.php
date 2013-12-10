@@ -7,12 +7,12 @@ ini_set('max_execution_time', 300);
  *
  * Checks if the entered username is valid on the current wikisite
  *
- * @param $nom - username that is to be verified
+ * @param $username - username that is to be verified
  * @param $wikisite - website where the username is to be verified
  * @return bool - True if the username in valid, false otherwise
  */
-function user_exist($nom, $wikisite) {
-    $jsonurl = $wikisite . '/w/api.php?action=query&list=users&format=json&usprop=registration&ususers=' . $nom;
+function user_exist($username, $wikisite) {
+    $jsonurl = $wikisite . '/w/api.php?action=query&list=users&format=json&usprop=registration&ususers=' . $username;
     $json = curl_get_file_contents($jsonurl);
     $res = $json['content'];    //The json content received from the $jsonurl
     $obj = json_decode($res, true);
@@ -67,15 +67,15 @@ function curl_get_file_contents($url) {
  * Grabs all the contributions made by a given user, from a given url, in a given year
  * and keeps only the contributions where the ['parentid'] field will be equal to "0"
  *
- * @param $nom - the user that will be investigated
+ * @param $username - the user that will be investigated
  * @param $wikisite - the website where the investigation will take place
- * @param $annee - year for which the investigation will take place
+ * @param $year - year for which the investigation will take place
  * @return array - returns an array containing the page's id, title and the timestamp which indicates when the page was created
  */
-function createdByUser($nom, $wikisite, $annee) {
-    $nom = urlencode($nom);                 // some names can contain spaces
-    $rvstart = $annee . "-01-01T00:00:00Z";   // the beginning of the first year
-    $anneefin = $annee + 1;
+function createdByUser($username, $wikisite, $year) {
+    $username = urlencode($username);                 // some names can contain spaces
+    $rvstart = $year . "-01-01T00:00:00Z";   // the beginning of the first year
+    $anneefin = $year + 1;
     $rvend = $anneefin . "-01-01T00:00:00Z";  // the beginning of the second year
     $nodes = array();   //list of urls needed to grab data
 
@@ -85,12 +85,12 @@ function createdByUser($nom, $wikisite, $annee) {
      * @var $newEndDate - the end of the time interval for each query
      */
     for ($currentDate = strtotime($rvstart); $currentDate <= strtotime($rvend); $currentDate += (60 * 60 * 24 * 3)) {
-        $year = gmdate('Y', $currentDate);
-        $month = gmdate('m', $currentDate);
-        $day = gmdate('d', $currentDate);
-        $hour = gmdate('H', $currentDate);
-        $min = gmdate('i', $currentDate);
-        $sec = gmdate('s', $currentDate);
+        $starttYear = gmdate('Y', $currentDate);
+        $startMonth = gmdate('m', $currentDate);
+        $starttDay = gmdate('d', $currentDate);
+        $startHour = gmdate('H', $currentDate);
+        $startMin = gmdate('i', $currentDate);
+        $startSec = gmdate('s', $currentDate);
 
         $endYear = gmdate('Y', $currentDate + (60 * 60 * 24 * 3)); // currentDate + 3 days
         $endMonth = gmdate('m', $currentDate + (60 * 60 * 24 * 3));
@@ -112,9 +112,9 @@ function createdByUser($nom, $wikisite, $annee) {
             $newEndDate = $endYear . "-" . $endMonth . "-" . $endDay . "T" . $endHour . ":" . $endMin . ":" . $endSec . "Z";
         }
 
-        $newStartDate = $year . "-" . $month . "-" . $day . "T" . $hour . ":" . $min . ":" . $sec . "Z";
+        $newStartDate = $starttYear . "-" . $startMonth . "-" . $starttDay . "T" . $startHour . ":" . $startMin . ":" . $startSec . "Z";
 
-        $jsonurl = $wikisite . "/w/api.php?action=query&list=usercontribs&format=json&uclimit=max&ucstart=" . $newStartDate . "&ucend=" . $newEndDate . "&ucuser=" . $nom . "&ucnamespace=0&ucdir=newer&ucprop=ids%7Ctitle%7Ctimestamp";
+        $jsonurl = $wikisite . "/w/api.php?action=query&list=usercontribs&format=json&uclimit=max&ucstart=" . $newStartDate . "&ucend=" . $newEndDate . "&ucuser=" . $username . "&ucnamespace=0&ucdir=newer&ucprop=ids%7Ctitle%7Ctimestamp";
         $nodes[] = $jsonurl;    // add url to the list
     }
 
@@ -161,14 +161,14 @@ function createdByUser($nom, $wikisite, $annee) {
  *
  * Finds the date of the last contribution of the given user, on a given page, on a given website
  *
- * @param $user
+ * @param $username
  * @param $wikisite
  * @param $pageId
  * @return String  - returns a string of a wiki timestamp
  */
-function getUsersLatestContrib($user, $wikisite, $pageId) {
+function getUsersLatestContrib($username, $wikisite, $pageId) {
     $result = '';
-    $jsonurl = $wikisite . "/w/api.php?action=query&prop=revisions&format=json&rvprop=ids%7Ctimestamp%7Cuser&rvlimit=1&rvdir=older&rvuser=" . $user . "&pageids=" . $pageId;
+    $jsonurl = $wikisite . "/w/api.php?action=query&prop=revisions&format=json&rvprop=ids%7Ctimestamp%7Cuser&rvlimit=1&rvdir=older&rvuser=" . $username . "&pageids=" . $pageId;
     $json = curl_get_file_contents($jsonurl);
     $res = $json['content'];
     $obj = json_decode($res, true);
@@ -215,28 +215,28 @@ function calcTimestampDiff($timestamp) {
     return $interval->days;
 }
 
-/*
+/**
   Fonction subscription:
   permet de trouver la date d'inscription
   et de la retourner en String
  */
 
-function subscription($name, $wikisite) {
-    $jsonurl = $wikisite . "/w/api.php?action=query&list=users&format=json&usprop=registration&ususers=" . $name;
+function subscription($username, $wikisite) {
+    $jsonurl = $wikisite . "/w/api.php?action=query&list=users&format=json&usprop=registration&ususers=" . $username;
     $json = file_get_contents($jsonurl, true);
     $obj = json_decode($json, true);
     $date = substr($obj['query']['users'][0]['registration'], 0, 10);
     return $date;
 }
 
-/*
+/**
   Fonction sexe:
   permet de trouver la  sexe
   et de la retourner en String
  */
 
-function sexe($name, $wikisite) {
-    $jsonurl = $wikisite . "/w/api.php?action=query&list=users&format=json&usprop=gender&ususers=" . $name;
+function sexe($username, $wikisite) {
+    $jsonurl = $wikisite . "/w/api.php?action=query&list=users&format=json&usprop=gender&ususers=" . $username;
     $json = file_get_contents($jsonurl, true);
     $obj = json_decode($json, true);
     $sexe = $obj['query']['users'][0]['gender'];
@@ -247,4 +247,21 @@ function sexe($name, $wikisite) {
     } else {
         return "Inconnu";
     }
+}
+
+/**
+ * Function name: timestampToDate
+ *
+ * Converts a timestamp in a Year-month-day string
+ *
+ * @param $timestamp
+ * @return String  - returns a Year-month-day string
+ */
+function timestampToDate($timestamp){
+    $theDate = strtotime($timestamp);
+    $year = gmdate('Y',$theDate);
+    $month = gmdate('m',$theDate);
+    $day = gmdate('d',$theDate);
+    $result = $year.'-'.$month.'-'.$day;
+    return $result;
 }
