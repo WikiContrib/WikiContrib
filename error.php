@@ -1,6 +1,6 @@
 
 <?php
-if (isset($_SESSION['erreur'])) {
+if (isset($_SESSION['erreur']) && isset($_SESSION['erreur_detail'])) {
 
     $erreur = $_SESSION['erreur'];
     $erreur_detail = $_SESSION['erreur_detail'];
