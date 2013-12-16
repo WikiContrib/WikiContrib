@@ -28,7 +28,7 @@
                     </SELECT>
                 </p>
                 <p>
-                    <label for="annee">POUR QUEL ANNÉE ?</label>
+                    <label for="annee">POUR QUELLE ANNÉE ?</label>
                     <SELECT name="annee">
                         <OPTION value="2014">2014</OPTION>
                         <OPTION selected value="2013">2013</OPTION>
@@ -48,7 +48,7 @@
         <div id="recherche" style="display:none;" >
             <table class="recherche" border="0" bgcolor="ff0000" height="40" width="300" >
                 <tr align="center">
-                    <td align="center"><label>ANALYSE EN COURS....S'IL VOUS PLAIT PATIENTER</label></td>
+                    <td align="center"><label>ANALYSE EN COURS... VEUILLEZ PATIENTER SVP</label></td>
                 </tr>
             </table>
         </div>
